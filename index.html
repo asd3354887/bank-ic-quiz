@@ -51,6 +51,7 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:8px
 #timer{font-weight:700;font-variant-numeric:tabular-nums;color:var(--fg)}
 .fav{font-size:20px;padding:4px 12px;color:#f59e0b}
 table{width:100%;border-collapse:collapse;font-size:14px}td,th{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left}
+.btnlink{display:inline-block;color:var(--pri);text-decoration:none;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin:4px 6px 4px 0}
 </style>
 </head>
 <body>
@@ -62,8 +63,8 @@ const KEY = CFG.key;
 let S = null;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 S = Object.assign({rec: {}, wrong: {}, fav: {}, mock: {}, hist: [], cur: null,
-                   prefs: {s: SUBS[0], star: 1, mode: 'all', shuf: false}}, S || {});
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+                   prefs: {s: SUBS[0], star: 1, mode: 'all', shuf: false}, plan: {chk: {}, snap: {}}}, S || {});
+const save = quiet => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} if (!quiet) markDirty(); };
 
 const ITEMS = {}, ORDER = {};
 let ordN = 0;
@@ -105,7 +106,7 @@ const isOk = (q, a) => q.ans == null || a === q.ans;
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const fmt = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 
-let view = 'home', tab = 'practice', sess = null, result = null, timerId = null;
+let view = 'home', tab = 'plan', sess = null, result = null, timerId = null;
 
 function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
 
@@ -114,18 +115,19 @@ function record(q, n, fromWrong) {
   const r = S.rec[q.id] || {c: 0, w: 0};
   ok ? r.c++ : r.w++;
   r.last = ok ? 1 : 0;
+  r.t = Date.now();
   S.rec[q.id] = r;
-  if (!ok) S.wrong[q.id] = 1; else if (fromWrong) delete S.wrong[q.id];
+  if (!ok) S.wrong[q.id] = Date.now(); else if (fromWrong) { delete S.wrong[q.id]; (S.gone = S.gone || {})[q.id] = Date.now(); }
 }
 
 /* ---------- 首頁 ---------- */
 function home() {
   view = 'home'; sess = null; stopTimer();
-  const tabs = [['practice', '練習'], ['mock', '模擬考'], ['wrong', '錯題本'], ['stats', '紀錄']];
-  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1790700044">📖 筆記</a><a href="answers.html?v=1790700044">✅ 解析</a><a href="numbers.html?v=1790700044">🔢 數字</a><a href="predict.html?v=1790700044">🎯 預測</a></span></div><nav>${tabs.map(([k, v]) =>
+  const tabs = [['plan', '📅 每日'], ['practice', '練習'], ['mock', '模擬考'], ['wrong', '錯題本'], ['stats', '紀錄']];
+  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1790700889">📖 筆記</a><a href="answers.html?v=1790700889">✅ 解析</a><a href="numbers.html?v=1790700889">🔢 數字</a><a href="predict.html?v=1790700889">🎯 預測</a></span></div><nav>${tabs.map(([k, v]) =>
     `<button class="tab ${tab === k ? 'on' : ''}" data-act="tab" data-arg="${k}">${v}</button>`).join('')}</nav></header><main>`;
-  if (!['practice', 'mock', 'wrong', 'stats'].includes(tab)) tab = 'practice';
-  h += {practice: practiceTab, mock: mockTab, wrong: wrongTab, stats: statsTab}[tab]();
+  if (!['plan', 'practice', 'mock', 'wrong', 'stats'].includes(tab)) tab = 'plan';
+  h += {plan: planTab, practice: practiceTab, mock: mockTab, wrong: wrongTab, stats: statsTab}[tab]();
   app.innerHTML = h + '</main>';
   const st = app.querySelector('[data-pref=star]'); if (st) st.value = S.prefs.star;
   const md = app.querySelector('[data-pref=mode]'); if (md) md.value = S.prefs.mode;
@@ -136,6 +138,139 @@ function hotList(s, ch) {
   const src = S.prefs.star === 0 ? DATA.hot.concat(DATA.single, DATA.old) : DATA.hot.concat(DATA.old);
   return src.filter(q => q.s === s && (!ch || q.ch === ch) && q.star >= S.prefs.star && q.ans != null)
     .sort((a, b) => chs.indexOf(a.ch) - chs.indexOf(b.ch) || (b.star > 0) - (a.star > 0) || ORDER[a.id] - ORDER[b.id]);
+}
+
+/* ---------- 每日作業 ---------- */
+const NOTE = {"第 1 部分　考試資訊與準備策略": "第-1-部分-考試資訊與準備策略", "考古題重複率（每屆考卷中，以前考過的題目占幾成）": "考古題重複率每屆考卷中以前考過的題目占幾成", "各章每屆大約考幾題（最近 10 屆中位數）": "各章每屆大約考幾題最近-10-屆中位數", "第 2 部分　讀書計畫表（9/29～10/14）": "第-2-部分-讀書計畫表929～1014", "第 3 部分　第一科 法規：高頻考點": "第-3-部分-第一科-法規高頻考點", "法規 1｜銀行業務相關規範（每屆約 4 題；高頻 27 題）": "法規-1｜銀行業務相關規範每屆約-4-題；高頻-27-題", "法規 2｜信用卡、現金卡業務（每屆約 7 題；高頻 26 題）": "法規-2｜信用卡現金卡業務每屆約-7-題；高頻-26-題", "法規 3｜票券證券、空白單據與保管（每屆約 4 題；高頻 34 題）": "法規-3｜票券證券空白單據與保管每屆約-4-題；高頻-34-題", "法規 4｜徵信與授信相關規章（每屆約 8 題；高頻 45 題）": "法規-4｜徵信與授信相關規章每屆約-8-題；高頻-45-題", "法規 5｜委外作業與出售不良債權（每屆約 3 題；高頻 18 題）": "法規-5｜委外作業與出售不良債權每屆約-3-題；高頻-18-題", "法規 6｜銀行安全管理（每屆約 7 題；高頻 48 題）": "法規-6｜銀行安全管理每屆約-7-題；高頻-48-題", "法規 7｜歹徒詐騙與防制（每屆約 5 題；高頻 33 題）": "法規-7｜歹徒詐騙與防制每屆約-5-題；高頻-33-題", "法規 8｜內部控制及稽核制度（每屆約 12 題；高頻 81 題）": "法規-8｜內部控制及稽核制度每屆約-12-題；高頻-81-題", "第 4 部分　第二科 實務：高頻考點": "第-4-部分-第二科-實務高頻考點", "實務 1｜內部控制概論（每屆約 8 題；高頻 55 題）": "實務-1｜內部控制概論每屆約-8-題；高頻-55-題", "實務 2｜出納業務（每屆約 7 題；高頻 45 題）": "實務-2｜出納業務每屆約-7-題；高頻-45-題", "實務 3｜存款業務（每屆約 8 題；高頻 57 題）": "實務-3｜存款業務每屆約-8-題；高頻-57-題", "實務 4｜徵信與授信（每屆約 7 題；高頻 49 題）": "實務-4｜徵信與授信每屆約-7-題；高頻-49-題", "實務 5｜逾期放款催收與呆帳（每屆約 8 題；高頻 57 題）": "實務-5｜逾期放款催收與呆帳每屆約-8-題；高頻-57-題", "實務 6｜外匯作業（每屆約 6 題；高頻 35 題）": "實務-6｜外匯作業每屆約-6-題；高頻-35-題", "實務 7｜票券與證券業務（每屆約 10 題；高頻 73 題）": "實務-7｜票券與證券業務每屆約-10-題；高頻-73-題", "實務 8｜信託業務（每屆約 4 題；高頻 28 題）": "實務-8｜信託業務每屆約-4-題；高頻-28-題", "實務 9｜財富管理業務（每屆約 5 題；高頻 36 題）": "實務-9｜財富管理業務每屆約-5-題；高頻-36-題", "實務 10｜消費金融業務（每屆約 8 題；高頻 66 題）": "實務-10｜消費金融業務每屆約-8-題；高頻-66-題", "實務 11｜資訊安全（每屆約 6 題；高頻 44 題）": "實務-11｜資訊安全每屆約-6-題；高頻-44-題", "實務 12｜衍生性金融商品（每屆約 3 題；高頻 22 題）": "實務-12｜衍生性金融商品每屆約-3-題；高頻-22-題"};
+const YEAR = 2026, RATE = 45;
+const R = (s, c, min) => ({k: 'read', s, c, min}), H = (s, c) => ({k: 'hi', s, c}), O = (s, c) => ({k: 'one', s, c}), V = s => ({k: 'rev', s});
+const M = (id, min, opt) => ({k: 'mock', id, min, opt}), W = (s, min) => ({k: 'wrong', s, min}), C = (text, min, note) => ({k: 'chk', text, min, note});
+const PLAN = [
+  ['10/1', '四', [C('看筆記「第 1 部分」考試資訊與準備策略', 15, '第 1 部分'), R('prac', 0, 15), H('prac', 0), R('prac', 1, 15), H('prac', 1)]],
+  ['10/2', '五', [R('prac', 2, 15), H('prac', 2), R('prac', 3, 15), H('prac', 3)]],
+  ['10/3', '六', [R('prac', 4, 15), H('prac', 4), R('prac', 5, 15), H('prac', 5), R('prac', 6, 20), H('prac', 6)]],
+  ['10/4', '日', [R('prac', 7, 10), H('prac', 7), R('prac', 8, 10), H('prac', 8), R('prac', 10, 15), H('prac', 10), R('prac', 11, 10), H('prac', 11), W('prac', 30)]],
+  ['10/5', '一', [R('prac', 9, 15), H('prac', 9), M('49實務', 120)]],
+  ['10/6', '二', [R('law', 7, 20), H('law', 7), W('prac', 30)]],
+  ['10/7', '三', [R('law', 5, 10), H('law', 5), R('law', 6, 10), H('law', 6), R('law', 4, 10), H('law', 4)]],
+  ['10/8', '四', [R('law', 0, 10), H('law', 0), R('law', 1, 10), H('law', 1), R('law', 2, 10), H('law', 2), W('law', 30)]],
+  ['10/9', '五', [R('law', 3, 15), H('law', 3), M('49法規', 80), W('all', 30)]],
+  ['10/10', '六・國慶', [O('law', 7), O('law', 3)]],
+  ['10/11', '日', [M('predAprac', 120), M('predAlaw', 80), W('all', 40)]],
+  ['10/12', '一', [M('predBlaw', 80), V('prac')]],
+  ['10/13', '二', [M('predBprac', 120), C('看完 🔢 數字速記（法規、實務都要）', 45, 'numbers.html'), W('all', 30), M('predClaw', 80, 1), M('predCprac', 120, 1)]],
+  ['10/14', '三・考試', [C('出門前看 🔢 數字速記的法規部分', 15, 'numbers.html'), C('准考證、身分證、文具帶齊', 5), C('兩節中間休息時看 🔢 數字速記的實務部分', 15, 'numbers.html')]]
+];
+let planDay = null;
+const chName = (s, c) => DATA.blocks[s][c][0];
+const hiSet = (s, ch, star) => DATA.hot.concat(DATA.old).filter(q => q.s === s && (!ch || q.ch === ch) && q.star >= star && q.ans != null);
+const oneSet = (s, ch) => DATA.hot.concat(DATA.single, DATA.old).filter(q => q.s === s && q.ch === ch && !q.star && q.ans != null);
+const qMin = n => Math.max(5, Math.round(n * 60 / RATE));
+const dayTime = di => { const [m, d] = PLAN[di][0].split('/'); return new Date(YEAR, m - 1, d).getTime(); };
+function noteHref(prefix) {
+  if (typeof prefix === 'string' && prefix.endsWith('.html')) return `${prefix}?v=1790700889`;
+  const ids = [].concat(prefix).map(p => Object.keys(NOTE).find(t => t.startsWith(p))).filter(Boolean).map(k => NOTE[k]);
+  return `note.html?v=1790700889${ids.length ? '&only=' + encodeURIComponent(ids.join(',')) : ''}`;
+}
+function todayIdx() { const t = Date.now(); let i = -1; PLAN.forEach((p, k) => { if (t >= dayTime(k)) i = k; }); return i; }
+const taskSet = t => t.k === 'hi' ? hiSet(t.s, chName(t.s, t.c), 1) : t.k === 'one' ? oneSet(t.s, chName(t.s, t.c)) : hiSet(t.s, '', 2);
+
+function taskList(t, di) {
+  if (t.k === 'wrong') { const base = S.plan.snap[`${di}-${t.s}`] || []; return base.filter(id => S.wrong[id]).map(id => ITEMS[id]); }
+  const L = taskSet(t);
+  const t0 = dayTime(di), fresh = q => S.rec[q.id] && (t.k !== 'rev' || (S.rec[q.id].t || 0) >= t0);
+  return L.filter(q => !fresh(q)).concat(L.filter(fresh));
+}
+
+function taskInfo(t, di, ti) {
+  if (t.k === 'read' || t.k === 'chk') {
+    const on = S.plan.chk[`${di}-${ti}`] > 0;
+    return {min: t.min, pct: on ? 1 : 0, manual: 1, sub: `約 ${t.min} 分鐘`,
+      title: t.k === 'read' ? `📖 讀筆記「${chName(t.s, t.c)}」` : t.text,
+      href: t.k === 'read' ? noteHref(chName(t.s, t.c)) : t.note ? noteHref(t.note) : ''};
+  }
+  if (t.k === 'hi' || t.k === 'one' || t.k === 'rev') {
+    const L = taskSet(t);
+    const t0 = dayTime(di), done = L.filter(q => S.rec[q.id] && (t.k !== 'rev' || (S.rec[q.id].t || 0) >= t0));
+    const right = done.filter(q => S.rec[q.id].last).length, min = qMin(L.length);
+    const name = chName(t.s, t.c || 0);
+    return {min, pct: done.length / L.length, n: done.length, right, start: 1,
+      title: t.k === 'hi' ? `📝 高頻題「${name}」全部做一遍` : t.k === 'one' ? `📝 只考過 1 屆的題目「${name}」做一遍` : `🔁 ${SHORT[t.s]} ⭐⭐ 以上重做一遍（這天做的才算）`,
+      sub: `${L.length} 題 · 做過 ${done.length} · 上次答對 ${right} · 約 ${min} 分鐘`};
+  }
+  if (t.k === 'mock') {
+    const p = paperOf(t.id), m = S.mock[t.id];
+    return {min: t.min, pct: m ? 1 : 0, mock: t.id, opt: t.opt, title: `⏱ 限時模擬考：${p.name}${t.opt ? '（選做，不算進完成度）' : ''}`,
+      sub: `限時 ${p.min} 分鐘＋檢討錯題 · 約 ${t.min} 分鐘${m ? ` · 最高 ${m.best} 分` : ''}`};
+  }
+  const sk = `${di}-${t.s}`, name = t.s === 'all' ? '全部' : SHORT[t.s];
+  if (!S.plan.snap[sk] && di <= todayIdx()) {
+    S.plan.snap[sk] = wrongIds(t.s).filter(id => ITEMS[id].ans != null);
+    (S.plan.snapT = S.plan.snapT || {})[sk] = Date.now(); save();
+  }
+  const base = S.plan.snap[sk];
+  if (!base) return {min: t.min, pct: 0, title: `❌ 錯題本（${name}）清掉這天以前的錯題`, sub: `當天第一次打開時記下要清哪些 · 約 ${t.min} 分鐘`};
+  const cleared = base.filter(id => !S.wrong[id]).length;
+  return {min: t.min, pct: base.length ? cleared / base.length : 1, start: base.length > cleared,
+    title: `❌ 錯題本（${name}）清掉這天以前的錯題`,
+    sub: base.length ? `這天開始時 ${base.length} 題 · 已答對移出 ${cleared} · 約 ${t.min} 分鐘` : `這天開始時錯題本是空的 · 約 ${t.min} 分鐘`};
+}
+
+function dayInfo(di) {
+  const T = PLAN[di][2].map((t, ti) => taskInfo(t, di, ti)), req = T.filter(x => !x.opt);
+  const min = req.reduce((a, x) => a + x.min, 0);
+  return {T, min, pct: min ? req.reduce((a, x) => a + x.min * x.pct, 0) / min : 0,
+    n: T.reduce((a, x) => a + (x.n || 0), 0), right: T.reduce((a, x) => a + (x.right || 0), 0)};
+}
+
+function composite(ti) {
+  let pm = 0, pd = 0;
+  for (let k = 0; k <= ti; k++) { const d = dayInfo(k); pm += d.min; pd += d.min * d.pct; }
+  const HQ = [].concat(...SUBS.map(s => hiSet(s, '', 1)));
+  const got = HQ.filter(q => S.rec[q.id] && S.rec[q.id].last).length;
+  const mk = {};
+  S.hist.forEach(x => { const p = paperOf(x.pid), s = p ? p.s : x.pid.split('-')[1]; mk[s] = mk[s] || []; if (mk[s].length < 2) mk[s].push(x.score); });
+  const avg = s => mk[s] ? mk[s].reduce((a, b) => a + b, 0) / mk[s].length : null;
+  const ms = SUBS.map(avg).filter(v => v != null);
+  const parts = [['到今天為止的作業完成度', ti >= 0 ? pd / pm : null, 0.3, ti >= 0 ? `${PLAN[0][0]}～${PLAN[ti][0]} 的作業` : '10/1 才開始算'],
+    ['高頻題熟練度', got / HQ.length, 0.4, `${HQ.length} 題高頻題中，上次答對 ${got} 題`],
+    ['模擬考', ms.length ? Math.min(...ms) / 100 : null, 0.3, ms.length ? `各科最近 2 次平均：${SUBS.map(s => `${SHORT[s]} ${avg(s) == null ? '—' : Math.round(avg(s))}`).join('、')}（取較低的一科）` : '還沒考過']];
+  const use = parts.filter(p => p[1] != null), w = use.reduce((a, p) => a + p[2], 0);
+  return {score: Math.round(use.reduce((a, p) => a + p[1] * p[2], 0) / w * 100), parts};
+}
+
+function planTab() {
+  const ti = todayIdx();
+  if (planDay == null) planDay = Math.max(0, ti);
+  const di = planDay, D = dayInfo(di), [date, wd] = PLAN[di];
+  let h = `<div class="card"><label>日期 <select data-plan="day">${PLAN.map((p, k) =>
+    `<option value="${k}" ${k === di ? 'selected' : ''}>${p[0]}（${p[1]}）${k === ti ? '・今天' : ''}</option>`).join('')}</select></label>
+    <div class="mut">從 10/1 開始排：前 5 天實務（第二節，80 題、章節多），接著 5 天法規（10/10 補只考過 1 屆的題目），最後 4 天模擬考＋清錯題。題目類作業會自動算進度（在這裡按「開始」，或在練習、模擬考分頁做的都算）；讀筆記類讀完自己打勾。</div>${syncBadge()}</div>`;
+  h += `<div class="card"><div class="rt"><b>${date}（${wd}）的作業</b><span>預計 ${(D.min / 60).toFixed(1)} 小時</span></div>
+    <div class="big">${Math.round(D.pct * 100)}%</div><div class="pbar"><i style="width:${D.pct * 100}%"></i></div>
+    <div class="mut">完成度（依每項預計時間加權）${D.n ? ` · 這天的題目上次答對率 ${Math.round(D.right / D.n * 100)}%（${D.right}/${D.n}）` : ''}</div></div>`;
+  D.T.forEach((x, k) => {
+    const ok = x.pct >= 1;
+    h += `<div class="card"><div class="rt"><b>${ok ? '✅' : x.pct > 0 ? '🟡' : '⬜'} ${esc(x.title)}</b><span>${Math.round(x.pct * 100)}%</span></div>
+      <div class="mut">${esc(x.sub)}</div><div class="pbar"><i style="width:${x.pct * 100}%"></i></div>
+      ${x.start ? `<button class="primary" data-act="pstart" data-arg="${di}-${k}">${x.pct > 0 ? '繼續' : '開始'}</button>` : ''}
+      ${x.mock ? `<button class="primary" data-act="mstart" data-arg="${x.mock}">開始模擬考</button>` : ''}
+      ${x.href ? `<a class="btnlink" href="${x.href}">${x.href.startsWith('numbers') ? '🔢 打開數字速記' : '📖 打開筆記'}</a>` : ''}
+      ${x.manual ? `<button data-act="pchk" data-arg="${di}-${k}">${ok ? '取消打勾' : '✔ 完成了'}</button>` : ''}</div>`;
+  });
+  const cs = composite(ti);
+  const tag = cs.score >= 80 ? '🟢 很穩：照進度走、錯題本清空就好' : cs.score >= 70 ? '🟡 接近及格線：先補完今天以前沒做完的，錯題本要清' : '🔴 還不夠：優先補完沒做完的高頻題章節';
+  h += `<div class="card"><b>📊 綜合評分</b><div class="big center">${cs.score}</div><p class="center">${tag}</p>
+    <table><tr><th>項目</th><th>分數</th><th>權重</th><th>說明</th></tr>${cs.parts.map(([n, v, w, d]) =>
+      `<tr><td>${n}</td><td>${v == null ? '—' : Math.round(v * 100)}</td><td>${Math.round(w * 100)}%</td><td>${esc(d)}</td></tr>`).join('')}</table>
+    <div class="mut">還沒有分數的項目不算，權重按比例分給其他項。兩科都要 70 分才過，所以模擬考取較低的一科。</div></div>`;
+  h += '<div class="card"><b>14 天總覽</b><div class="mut">點日期直接切換</div>';
+  PLAN.forEach((p, k) => {
+    const d = k === di ? D : dayInfo(k);
+    h += `<button class="row" data-act="pday" data-arg="${k}"><div class="rt"><b>${k === di ? '▶ ' : ''}${p[0]}（${p[1]}）${k === ti ? '・今天' : ''}</b>
+      <span>${Math.round(d.pct * 100)}% · ${(d.min / 60).toFixed(1)} 小時</span></div><div class="pbar"><i style="width:${d.pct * 100}%"></i></div></button>`;
+  });
+  return h + '</div>';
 }
 
 function practiceTab() {
@@ -200,7 +335,7 @@ function wrongTab() {
 }
 
 function statsTab() {
-  let h = '';
+  let h = syncCard();
   SUBS.forEach(s => {
     const chs = [...new Set(DATA.hot.filter(q => q.s === s).map(q => q.ch))];
     const all = DATA.hot.concat(DATA.old).filter(q => q.s === s && q.star >= 1 && q.ans != null)
@@ -220,7 +355,7 @@ function statsTab() {
   h += S.hist.length ? '<table><tr><th>時間</th><th>考卷</th><th>分數</th><th>用時</th></tr>' + S.hist.slice(0, 20).map(x =>
     `<tr><td>${esc(x.date)}</td><td>${esc(x.name)}</td><td class="${x.score >= 70 ? 'pass' : 'fail'}">${x.score}</td><td>${x.used} 分</td></tr>`).join('') + '</table>'
     : '<div class="mut">還沒考過</div>';
-  h += '</div><div class="card mut">紀錄存在這台裝置的瀏覽器裡（手機、電腦各自分開）。<br><button data-act="reset">清除所有紀錄</button></div>';
+  h += '</div><div class="card mut">紀錄存在這台裝置的瀏覽器裡；開啟上面的「同步」後，手機和電腦的紀錄會自動合併。<br><button data-act="reset">清除所有紀錄</button></div>';
   return h;
 }
 
@@ -307,15 +442,15 @@ function submitMock() {
   p.items.forEach(q => {
     const a = c.ans[q.id];
     if (a != null) record(q, a, false);
-    else if (q.ans != null) S.wrong[q.id] = 1;
+    else if (q.ans != null) S.wrong[q.id] = Date.now();
     if (a != null ? isOk(q, a) : q.ans == null) right++;
   });
   const score = score100(right, p.items.length);
   const m = S.mock[p.id] || {best: 0, times: 0};
-  m.best = Math.max(m.best, score); m.times++;
+  m.best = Math.max(m.best, score); m.times++; m.t = Date.now();
   S.mock[p.id] = m;
   const used = Math.round((Math.min(Date.now(), c.end) - c.start) / 60000);
-  S.hist.unshift({pid: p.id, name: p.name, score, used, date: new Date().toLocaleString('zh-TW', {hour12: false})});
+  S.hist.unshift({pid: p.id, name: p.name, score, used, ts: Date.now(), date: new Date().toLocaleString('zh-TW', {hour12: false})});
   result = {p, ans: {...c.ans}, score, right, used, i: 0};
   S.cur = null; save();
   showResult();
@@ -355,11 +490,17 @@ function act(a, arg) {
     case 'tab': tab = arg; home(); break;
     case 'home': home(); break;
     case 'subj': S.prefs.s = arg; save(); home(); break;
+    case 'pday': planDay = +arg; home(); window.scrollTo(0, 0); break;
+    case 'pchk': S.plan.chk[arg] = S.plan.chk[arg] > 0 ? -Date.now() : Date.now(); save(); home(); break;
+    case 'pstart': {
+      const [di, ti] = arg.split('-').map(Number), t = PLAN[di][2][ti];
+      const title = t.k === 'hi' || t.k === 'one' ? chName(t.s, t.c) : t.k === 'rev' ? `${SHORT[t.s]}｜⭐⭐ 以上` : '錯題本';
+      startSession(taskList(t, di), `${PLAN[di][0]}｜${title}`, t.k === 'wrong' ? 'wrong' : 'hot'); break; }
     case 'start': startSession(hotList(S.prefs.s, arg).filter(q => S.prefs.mode === 'all' ? true :
         S.prefs.mode === 'new' ? !S.rec[q.id] : !S.rec[q.id] || !S.rec[q.id].last), arg || `${SHORT[S.prefs.s]}｜全部章節`, 'hot'); break;
     case 'wstart': startSession(wrongIds(arg).map(id => ITEMS[id]), arg === 'fav' ? '收藏題' : '錯題本', arg === 'fav' ? 'fav' : 'wrong'); break;
     case 'redo': startSession(sess.wrongs, '重做錯題', sess.kind); break;
-    case 'fav': { const q = curQ(); if (S.fav[q.id]) delete S.fav[q.id]; else S.fav[q.id] = 1; save();
+    case 'fav': { const q = curQ(); if (S.fav[q.id]) { delete S.fav[q.id]; (S.favGone = S.favGone || {})[q.id] = Date.now(); } else S.fav[q.id] = Date.now(); save();
       view === 'review' ? showReview() : showQ(false); break; }
     case 'pick': {
       const n = +arg;
@@ -401,7 +542,14 @@ function act(a, arg) {
       if (!result.list.length) { alert('全對，沒有錯題！'); return; }
       result.i = 0; showReview(); break; }
     case 'reset': if (confirm('確定清除所有作答紀錄、錯題本、收藏與模擬考成績？')) {
-      S = {rec: {}, wrong: {}, fav: {}, mock: {}, hist: [], cur: null, prefs: S.prefs}; save(); home(); } break;
+      S = {rec: {}, wrong: {}, fav: {}, mock: {}, hist: [], cur: null, prefs: S.prefs, plan: {chk: {}, snap: {}}, resetAt: Date.now()}; save(); home(); } break;
+    case 'syncset': { const t = (document.getElementById('synctoken') || {}).value; if (!t || !t.trim()) return;
+      setSyncCfg({token: t.trim()}); syncErr = ''; try { localStorage.setItem(DIRTY_KEY, '1'); } catch (e) {}
+      home(); syncNow(true).then(() => { if (syncErr) { setSyncCfg({}); home(); } }); break; }
+    case 'syncnow': syncNow(true); home(); break;
+    case 'synccopy': { const t = syncCfg().token;
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => alert('已複製金鑰，到另一台打開「紀錄」分頁貼上'), () => prompt('複製這組金鑰，貼到另一台', t)); break; }
+    case 'syncoff': if (confirm('這台裝置停止同步？（雲端和這台的進度都會保留）')) { setSyncCfg({}); home(); } break;
   }
 }
 
@@ -410,6 +558,7 @@ app.addEventListener('click', e => {
   if (b && !b.disabled) act(b.dataset.act, b.dataset.arg);
 });
 app.addEventListener('change', e => {
+  if (e.target.dataset.plan) { planDay = +e.target.value; home(); return; }
   const k = e.target.dataset.pref;
   if (!k) return;
   S.prefs[k] = k === 'shuf' ? e.target.checked : k === 'star' ? +e.target.value : e.target.value;
@@ -422,7 +571,119 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft') act('prev');
 });
 
+/* ---------- 手機電腦同步（GitHub Gist） ---------- */
+const SYNC_KEY = 'quizsync_v1', GIST_DESC = 'asd-quiz-sync', SYNC_FILE = KEY + '.json', DIRTY_KEY = 'quizsync_dirty_' + KEY;
+let syncBusy = false, syncLast = 0, syncErr = '', syncTimer = null, editVer = 0;
+function syncCfg() { try { return JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; } catch (e) { return {}; } }
+function setSyncCfg(c) { try { localStorage.setItem(SYNC_KEY, JSON.stringify(c)); } catch (e) {} }
+function markDirty() {
+  editVer++;
+  try { localStorage.setItem(DIRTY_KEY, '1'); } catch (e) {}
+  if (!syncCfg().token) return;
+  clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(false), 4000);
+}
+async function gh(path, opt) {
+  const r = await fetch('https://api.github.com' + path, Object.assign({cache: 'no-store'}, opt,
+    {headers: {Authorization: 'Bearer ' + syncCfg().token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json'}}));
+  if (!r.ok) throw new Error(r.status === 401 ? '金鑰無效或已過期，請重新產生' : r.status === 403 || r.status === 404 ? '金鑰沒有勾 gist 權限' : `GitHub 回應錯誤 ${r.status}`);
+  return r.json();
+}
+async function gistId() {
+  const c = syncCfg();
+  if (c.gist) return c.gist;
+  const list = await gh('/gists?per_page=100');
+  let g = list.find(x => x.description === GIST_DESC);
+  if (!g) g = await gh('/gists', {method: 'POST', body: JSON.stringify({description: GIST_DESC, public: false,
+    files: {'README.md': {content: '手機、電腦題庫進度同步用，請勿刪除'}}})});
+  setSyncCfg(Object.assign(syncCfg(), {gist: g.id}));
+  return g.id;
+}
+function shareState(x) {
+  return {rec: x.rec, wrong: x.wrong, gone: x.gone || {}, fav: x.fav, favGone: x.favGone || {}, mock: x.mock, hist: x.hist,
+          plan: x.plan || {chk: {}, snap: {}}, resetAt: x.resetAt || 0};
+}
+function mergeState(L, R) {
+  const cut = Math.max(L.resetAt || 0, R.resetAt || 0), ok = t => (t || 0) >= cut, each = (m, f) => Object.entries(m || {}).forEach(f);
+  const rec = {};
+  [L.rec, R.rec].forEach(m => each(m, ([id, r]) => { if (ok(r.t) && (!rec[id] || (r.t || 0) > (rec[id].t || 0))) rec[id] = r; }));
+  const set = (a1, g1, a2, g2) => {
+    const add = {}, gone = {};
+    [a1, a2].forEach(m => each(m, ([k, t]) => { if (ok(t)) add[k] = Math.max(add[k] || 0, t); }));
+    [g1, g2].forEach(m => each(m, ([k, t]) => { if (ok(t)) gone[k] = Math.max(gone[k] || 0, t); }));
+    Object.keys(add).forEach(k => { if ((gone[k] || 0) >= add[k]) delete add[k]; });
+    return [add, gone];
+  };
+  [L.wrong, L.gone] = set(L.wrong, L.gone, R.wrong, R.gone);
+  [L.fav, L.favGone] = set(L.fav, L.favGone, R.fav, R.favGone);
+  const mock = {};
+  [L.mock, R.mock].forEach(m => each(m, ([id, x]) => {
+    if (!ok(x.t)) return;
+    const o = mock[id] || {best: 0, times: 0, t: 0};
+    mock[id] = {best: Math.max(o.best, x.best), times: Math.max(o.times, x.times), t: Math.max(o.t || 0, x.t || 0)};
+  }));
+  const seen = new Set(), hist = [];
+  (L.hist || []).concat(R.hist || []).forEach(x => {
+    const k = `${x.pid}|${x.ts || x.date}|${x.score}`;
+    if (ok(x.ts) && !seen.has(k)) { seen.add(k); hist.push(x); }
+  });
+  hist.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const lp = L.plan || {}, rp = R.plan || {}, chk = {}, snap = {}, snapT = {};
+  [lp.chk, rp.chk].forEach(m => each(m, ([k, v]) => { if (ok(Math.abs(v)) && Math.abs(v) > Math.abs(chk[k] || 0)) chk[k] = v; }));
+  new Set(Object.keys(lp.snap || {}).concat(Object.keys(rp.snap || {}))).forEach(k => {
+    const a = (lp.snap || {})[k], b = (rp.snap || {})[k], ta = (lp.snapT || {})[k], tb = (rp.snapT || {})[k];
+    const useB = b && (!a || (tb || Infinity) < (ta || Infinity)), t = useB ? tb : ta;
+    if (t && t < cut) return;
+    snap[k] = useB ? b : a;
+    if (t) snapT[k] = t;
+  });
+  Object.assign(L, {rec, mock, hist: hist.slice(0, 300), plan: {chk, snap, snapT}, resetAt: cut});
+}
+async function syncNow(rerender) {
+  if (!syncCfg().token || syncBusy) return;
+  syncBusy = true;
+  const v = editVer, before = JSON.stringify(shareState(S));
+  try {
+    const id = await gistId();
+    const g = await gh('/gists/' + id);
+    const f = g.files[SYNC_FILE];
+    const R = f ? JSON.parse(f.truncated ? await (await fetch(f.raw_url, {cache: 'no-store'})).text() : f.content) : null;
+    if (R) mergeState(S, R);
+    save(true);
+    if (!R || localStorage.getItem(DIRTY_KEY)) {
+      await gh('/gists/' + id, {method: 'PATCH', body: JSON.stringify({files: {[SYNC_FILE]: {content: JSON.stringify(shareState(S))}}})});
+      if (editVer === v) localStorage.removeItem(DIRTY_KEY);
+    }
+    syncLast = Date.now(); syncErr = '';
+    if (rerender && view === 'home' && JSON.stringify(shareState(S)) !== before) home();
+  } catch (e) { syncErr = e.message || String(e); }
+  syncBusy = false;
+  if (view === 'home' && (tab === 'stats' || tab === 'plan')) home();
+  if (editVer !== v && syncCfg().token) { clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(false), 4000); }
+}
+const syncTime = () => new Date(syncLast).toLocaleTimeString('zh-TW', {hour12: false, hour: '2-digit', minute: '2-digit'});
+function syncBadge() {
+  if (!syncCfg().token) return '<div class="mut">☁️ 手機、電腦進度同步：到「紀錄」分頁設定一次即可</div>';
+  return `<div class="mut">☁️ ${syncBusy ? '同步中…' : syncErr ? `<span class="fail">同步失敗：${esc(syncErr)}</span>` : syncLast ? `已同步（${syncTime()}）` : '等待同步'}</div>`;
+}
+function syncCard() {
+  if (!syncCfg().token) return `<div class="card"><b>☁️ 手機、電腦進度同步</b>
+    <div class="mut">設定一次後，每次打開網頁、做完題目幾秒後都會自動同步。理財規劃和內控兩個網站共用同一組金鑰，進度分開存。<br>
+    ① 電腦登入 GitHub 後打開 <a href="https://github.com/settings/tokens/new?scopes=gist&description=quiz-sync" target="_blank" rel="noopener">這個連結</a>（已自動勾好 gist），「Expiration」選 90 days，拉到最下面按「Generate token」。<br>
+    ② 複製 ghp_ 開頭的金鑰，貼到下面，按「開始同步」。<br>
+    ③ 手機打開這一頁，貼上同一組金鑰（可以用 LINE 傳給自己）。</div>
+    <input id="synctoken" type="password" autocomplete="off" placeholder="貼上 ghp_ 開頭的金鑰" style="width:100%;font:inherit;padding:8px;margin:8px 0;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--fg)">
+    <button class="primary" data-act="syncset">開始同步</button>${syncErr ? `<div class="fail">${esc(syncErr)}</div>` : ''}</div>`;
+  return `<div class="card"><b>☁️ 手機、電腦進度同步：已開啟</b>${syncBadge()}
+    <div class="mut">每次打開網頁、做完題目幾秒後會自動同步；換裝置前也可以按「立即同步」。</div>
+    <button data-act="syncnow">立即同步</button><button data-act="synccopy">📋 複製金鑰（貼到另一台）</button><button data-act="syncoff">這台停止同步</button></div>`;
+}
+
 home();
+if (syncCfg().token) syncNow(true);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncNow(true);
+  else if (localStorage.getItem(DIRTY_KEY)) syncNow(false);
+});
 </script>
 </body>
 </html>
