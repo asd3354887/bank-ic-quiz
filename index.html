@@ -117,7 +117,7 @@ function record(q, n, fromWrong) {
 function home() {
   view = 'home'; sess = null; stopTimer();
   const tabs = [['practice', '練習'], ['mock', '模擬考'], ['wrong', '錯題本'], ['stats', '紀錄']];
-  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1790688119">📖 筆記</a><a href="answers.html?v=1790688119">✅ 解析</a><a href="numbers.html?v=1790688119">🔢 數字</a></span></div><nav>${tabs.map(([k, v]) =>
+  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1790688778">📖 筆記</a><a href="answers.html?v=1790688778">✅ 解析</a><a href="numbers.html?v=1790688778">🔢 數字</a></span></div><nav>${tabs.map(([k, v]) =>
     `<button class="tab ${tab === k ? 'on' : ''}" data-act="tab" data-arg="${k}">${v}</button>`).join('')}</nav></header><main>`;
   if (!['practice', 'mock', 'wrong', 'stats'].includes(tab)) tab = 'practice';
   h += {practice: practiceTab, mock: mockTab, wrong: wrongTab, stats: statsTab}[tab]();
