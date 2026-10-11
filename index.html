@@ -178,7 +178,7 @@ const PLAN = [
   ['10/13', '二', [Sm('prac', 120), C('看完 🔢 數字速記（法規、實務都要）', 45, 'numbers.html'), W('all', 30), M('predBprac', 120, 1), M('predClaw', 80, 1), M('predCprac', 120, 1)]],
   ['10/14', '三・考試', [C('出門前看 🔢 數字速記的法規部分', 15, 'numbers.html'), C('准考證、身分證、文具帶齊', 5), C('兩節中間休息時看 🔢 數字速記的實務部分', 15, 'numbers.html')]]
 ];
-let planDay = null, planAuto = true;
+function setPlanDay(k) { S.plan.day = {d: k, t: Date.now()}; save(); }
 const chName = (s, c) => DATA.blocks[s][c][0];
 const hiSet = (s, ch, star) => DATA.hot.concat(DATA.old).filter(q => q.s === s && (!ch || q.ch === ch) && q.star >= star && q.ans != null);
 const oneSet = (s, ch) => DATA.hot.concat(DATA.single, DATA.old).filter(q => q.s === s && q.ch === ch && !q.star && q.ans != null);
@@ -270,17 +270,17 @@ function composite(ti) {
 
 function planTab() {
   const ti = todayIdx();
-  for (let n = 0; n < PLAN.length; n++) {
+  if (!S.plan.day || !PLAN[S.plan.day.d]) {
     const k = PLAN.findIndex((p, k) => Math.round(dayInfo(k).pct * 100) < 100);
-    if (planAuto || planDay == null) planDay = k < 0 ? PLAN.length - 1 : k;
-    if (k < 0 || planDay !== k || dayOpen(k)) break;
-    // 前面的日子都 100% 了：這天的錯題本、⭐⭐ 重做提前開放
-    (S.plan.open = S.plan.open || {})[k] = Date.now(); save();
+    setPlanDay(k < 0 ? PLAN.length - 1 : k);
   }
-  const di = planDay, D = dayInfo(di), [date, wd] = PLAN[di];
+  const di = S.plan.day.d;
+  // 前面的日子都 100% 了：這天的錯題本、⭐⭐ 重做提前開放
+  if (!dayOpen(di) && PLAN.slice(0, di).every((p, k) => Math.round(dayInfo(k).pct * 100) >= 100)) { (S.plan.open = S.plan.open || {})[di] = Date.now(); save(); }
+  const D = dayInfo(di), [date, wd] = PLAN[di];
   let h = `<div class="card"><label>日期 <select data-plan="day">${PLAN.map((p, k) =>
     `<option value="${k}" ${k === di ? 'selected' : ''}>${p[0]}（${p[1]}）${k === ti ? '・今天' : ''}</option>`).join('')}</select></label>
-    <div class="mut">從 10/1 開始排：前 5 天實務（第二節，80 題、章節多），接著 5 天法規（10/10 補只考過 1 屆的題目），最後 4 天模擬考＋清錯題。題目類作業會自動算進度（在這裡按「開始」，或在練習、模擬考分頁做的都算）；讀筆記類讀完自己打勾。打開時會自動跳到最前面一天還沒 100% 的日子（手動選過日期就不自動換）；前面的日子都 100% 後，下一天的錯題本、⭐⭐ 重做會提前開放，可以一天一天往下做。</div>${syncBadge()}</div>`;
+    <div class="mut">從 10/1 開始排：前 5 天實務（第二節，80 題、章節多），接著 5 天法規（10/10 補只考過 1 屆的題目），最後 4 天模擬考＋清錯題。題目類作業會自動算進度（在這裡按「開始」，或在練習、模擬考分頁做的都算）；讀筆記類讀完自己打勾。會停在你上次選的日子，下次打開還是那天（手機、電腦同步後以最後一次選的為準；只有第一次打開時自動跳到最前面一天還沒 100% 的日子）；前面的日子都 100% 後，下一天的錯題本、⭐⭐ 重做會提前開放，可以一天一天往下做。</div>${syncBadge()}</div>`;
   h += `<div class="card"><div class="rt"><b>${date}（${wd}）的作業</b><span>預計 ${(D.tot / 60).toFixed(1)} 小時</span></div>
     <div class="big">${Math.round(D.pct * 100)}%</div><div class="pbar"><i style="width:${D.pct * 100}%"></i></div>
     <div class="mut">完成度（依每項預計時間加權）${D.n ? ` · 這天的題目上次答對率 ${Math.round(D.right / D.n * 100)}%（${D.right}/${D.n}）` : ''}</div></div>`;
@@ -677,7 +677,7 @@ function act(a, arg) {
     case 'tab': tab = arg; home(); break;
     case 'home': if (view === 'mock') { mockClock(null); save(); } home(); break;
     case 'subj': S.prefs.s = arg; save(); home(); break;
-    case 'pday': planDay = +arg; planAuto = false; home(); window.scrollTo(0, 0); break;
+    case 'pday': setPlanDay(+arg); home(); window.scrollTo(0, 0); break;
     case 'pchk': S.plan.chk[arg] = S.plan.chk[arg] > 0 ? -Date.now() : Date.now(); save(); home(); break;
     case 'pstart': {
       const [di, ti] = arg.split('-').map(Number), t = PLAN[di][2][ti];
@@ -750,7 +750,7 @@ app.addEventListener('click', e => {
   if (b && !b.disabled) act(b.dataset.act, b.dataset.arg);
 });
 app.addEventListener('change', e => {
-  if (e.target.dataset.plan) { planDay = +e.target.value; planAuto = false; home(); return; }
+  if (e.target.dataset.plan) { setPlanDay(+e.target.value); home(); return; }
   const k = e.target.dataset.pref;
   if (!k) return;
   S.prefs[k] = k === 'shuf' ? e.target.checked : k === 'star' ? +e.target.value : e.target.value;
@@ -859,7 +859,8 @@ function mergeState(L, R) {
   const open = {};
   [lp.open, rp.open].forEach(m => each(m, ([k, t]) => { if (ok(t)) open[k] = Math.min(open[k] || Infinity, t); }));
   const psess = [L.psess, R.psess].filter(p => p && ok(p.t)).sort((a, b) => b.t - a.t)[0] || null;
-  Object.assign(L, {rec, mock, hist: hist.slice(0, 300), plan: {chk, snap, snapT, open}, psess, resetAt: cut});
+  const day = [lp.day, rp.day].filter(d => d && ok(d.t)).sort((a, b) => b.t - a.t)[0];
+  Object.assign(L, {rec, mock, hist: hist.slice(0, 300), plan: Object.assign({chk, snap, snapT, open}, day ? {day} : {}), psess, resetAt: cut});
 }
 async function syncNow(rerender, gap = PUT_GAP) {
   if (!syncCfg().token || syncBusy) return;
