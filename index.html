@@ -141,7 +141,7 @@ function record(q, n, fromWrong, src) {
 function home() {
   view = 'home'; sess = null; stopTimer();
   const tabs = [['plan', '📅 每日'], ['practice', '練習'], ['mock', '模擬考'], ['wrong', '錯題本'], ['ana', '📊 分析'], ['stats', '紀錄']];
-  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1791708697">📖 筆記</a><a href="answers.html?v=1791708697">✅ 解析</a><a href="numbers.html?v=1791708697">🔢 數字</a><a href="predict.html?v=1791708697">🎯 預測</a></span></div><nav>${tabs.map(([k, v]) =>
+  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1791709472">📖 筆記</a><a href="answers.html?v=1791709472">✅ 解析</a><a href="numbers.html?v=1791709472">🔢 數字</a><a href="predict.html?v=1791709472">🎯 預測</a></span></div><nav>${tabs.map(([k, v]) =>
     `<button class="tab ${tab === k ? 'on' : ''}" data-act="tab" data-arg="${k}">${v}</button>`).join('')}</nav></header><main>`;
   if (!['plan', 'practice', 'mock', 'wrong', 'ana', 'stats'].includes(tab)) tab = 'plan';
   h += (tab !== 'mock' ? sessCard() : '') + {plan: planTab, practice: practiceTab, mock: mockTab, wrong: wrongTab, ana: anaTab, stats: statsTab}[tab]();
@@ -161,7 +161,7 @@ function hotList(s, ch) {
 const NOTE = {"第 1 部分　考試資訊與準備策略": "第-1-部分-考試資訊與準備策略", "考古題重複率（每屆考卷中，以前考過的題目占幾成）": "考古題重複率每屆考卷中以前考過的題目占幾成", "各章每屆大約考幾題（最近 5 屆平均）": "各章每屆大約考幾題最近-5-屆平均", "第 2 部分　讀書計畫表（9/29～10/14）": "第-2-部分-讀書計畫表929～1014", "第 3 部分　第一科 法規：高頻考點": "第-3-部分-第一科-法規高頻考點", "法規 1｜銀行業務相關規範（每屆約 5 題；高頻 27 題）": "法規-1｜銀行業務相關規範每屆約-5-題；高頻-27-題", "法規 2｜信用卡、現金卡業務（每屆約 6 題；高頻 26 題）": "法規-2｜信用卡現金卡業務每屆約-6-題；高頻-26-題", "法規 3｜票券證券、空白單據與保管（每屆約 5 題；高頻 34 題）": "法規-3｜票券證券空白單據與保管每屆約-5-題；高頻-34-題", "法規 4｜徵信與授信相關規章（每屆約 9 題；高頻 46 題）": "法規-4｜徵信與授信相關規章每屆約-9-題；高頻-46-題", "法規 5｜委外作業與出售不良債權（每屆約 3 題；高頻 18 題）": "法規-5｜委外作業與出售不良債權每屆約-3-題；高頻-18-題", "法規 6｜銀行安全管理（每屆約 5 題；高頻 47 題）": "法規-6｜銀行安全管理每屆約-5-題；高頻-47-題", "法規 7｜歹徒詐騙與防制（每屆約 5 題；高頻 33 題）": "法規-7｜歹徒詐騙與防制每屆約-5-題；高頻-33-題", "法規 8｜內部控制及稽核制度（每屆約 12 題；高頻 81 題）": "法規-8｜內部控制及稽核制度每屆約-12-題；高頻-81-題", "第 4 部分　第二科 實務：高頻考點": "第-4-部分-第二科-實務高頻考點", "實務 1｜內部控制概論（每屆約 8 題；高頻 54 題）": "實務-1｜內部控制概論每屆約-8-題；高頻-54-題", "實務 2｜出納業務（每屆約 8 題；高頻 46 題）": "實務-2｜出納業務每屆約-8-題；高頻-46-題", "實務 3｜存款業務（每屆約 7 題；高頻 59 題）": "實務-3｜存款業務每屆約-7-題；高頻-59-題", "實務 4｜徵信與授信（每屆約 8 題；高頻 50 題）": "實務-4｜徵信與授信每屆約-8-題；高頻-50-題", "實務 5｜逾期放款催收與呆帳（每屆約 7 題；高頻 55 題）": "實務-5｜逾期放款催收與呆帳每屆約-7-題；高頻-55-題", "實務 6｜外匯作業（每屆約 6 題；高頻 35 題）": "實務-6｜外匯作業每屆約-6-題；高頻-35-題", "實務 7｜票券與證券業務（每屆約 8 題；高頻 72 題）": "實務-7｜票券與證券業務每屆約-8-題；高頻-72-題", "實務 8｜信託業務（每屆約 4 題；高頻 29 題）": "實務-8｜信託業務每屆約-4-題；高頻-29-題", "實務 9｜財富管理業務（每屆約 9 題；高頻 35 題）": "實務-9｜財富管理業務每屆約-9-題；高頻-35-題", "實務 10｜消費金融業務（每屆約 7 題；高頻 66 題）": "實務-10｜消費金融業務每屆約-7-題；高頻-66-題", "實務 11｜資訊安全（每屆約 4 題；高頻 43 題）": "實務-11｜資訊安全每屆約-4-題；高頻-43-題", "實務 12｜衍生性金融商品（每屆約 4 題；高頻 23 題）": "實務-12｜衍生性金融商品每屆約-4-題；高頻-23-題"};
 const YEAR = 2026, RATE = 45;
 const R = (s, c, min) => ({k: 'read', s, c, min}), H = (s, c) => ({k: 'hi', s, c}), O = (s, c) => ({k: 'one', s, c}), V = s => ({k: 'rev', s});
-const M = (id, min, opt) => ({k: 'mock', id, min, opt}), W = (s, min) => ({k: 'wrong', s, min}), C = (text, min, note) => ({k: 'chk', text, min, note});
+const M = (id, min, opt) => ({k: 'mock', id, min, opt}), Sm = (s, min, opt) => ({k: 'sim', s, min, opt}), W = (s, min) => ({k: 'wrong', s, min}), C = (text, min, note) => ({k: 'chk', text, min, note});
 const PLAN = [
   ['10/1', '四', [C('看筆記「第 1 部分」考試資訊與準備策略', 15, '第 1 部分'), R('prac', 0, 15), H('prac', 0), R('prac', 1, 15), H('prac', 1)]],
   ['10/2', '五', [R('prac', 2, 15), H('prac', 2), R('prac', 3, 15), H('prac', 3)]],
@@ -174,8 +174,8 @@ const PLAN = [
   ['10/9', '五', [R('law', 3, 15), H('law', 3), M('49法規', 80), W('all', 30)]],
   ['10/10', '六・國慶', [O('law', 7), O('law', 3)]],
   ['10/11', '日', [M('predAprac', 120), M('predAlaw', 80), W('all', 40)]],
-  ['10/12', '一', [M('predBlaw', 80), V('prac')]],
-  ['10/13', '二', [M('predBprac', 120), C('看完 🔢 數字速記（法規、實務都要）', 45, 'numbers.html'), W('all', 30), M('predClaw', 80, 1), M('predCprac', 120, 1)]],
+  ['10/12', '一', [M('predBlaw', 80), Sm('law', 80), V('prac')]],
+  ['10/13', '二', [Sm('prac', 120), C('看完 🔢 數字速記（法規、實務都要）', 45, 'numbers.html'), W('all', 30), M('predBprac', 120, 1), M('predClaw', 80, 1), M('predCprac', 120, 1)]],
   ['10/14', '三・考試', [C('出門前看 🔢 數字速記的法規部分', 15, 'numbers.html'), C('准考證、身分證、文具帶齊', 5), C('兩節中間休息時看 🔢 數字速記的實務部分', 15, 'numbers.html')]]
 ];
 let planDay = null, planAuto = true;
@@ -187,9 +187,9 @@ const dayTime = di => { const [m, d] = PLAN[di][0].split('/'); return new Date(Y
 const dayOpen = di => di <= todayIdx() || !!(S.plan.open || {})[di];
 const dayStart = di => Math.min(dayTime(di), (S.plan.open || {})[di] || Infinity);
 function noteHref(prefix) {
-  if (typeof prefix === 'string' && prefix.endsWith('.html')) return `${prefix}?v=1791708697`;
+  if (typeof prefix === 'string' && prefix.endsWith('.html')) return `${prefix}?v=1791709472`;
   const ids = [].concat(prefix).map(p => Object.keys(NOTE).find(t => t.startsWith(p))).filter(Boolean).map(k => NOTE[k]);
-  return `note.html?v=1791708697${ids.length ? '&only=' + encodeURIComponent(ids.join(',')) : ''}`;
+  return `note.html?v=1791709472${ids.length ? '&only=' + encodeURIComponent(ids.join(',')) : ''}`;
 }
 function todayIdx() { const t = Date.now(); let i = -1; PLAN.forEach((p, k) => { if (t >= dayTime(k)) i = k; }); return i; }
 const taskSet = t => t.k === 'hi' ? hiSet(t.s, chName(t.s, t.c), 1) : t.k === 'one' ? oneSet(t.s, chName(t.s, t.c)) : hiSet(t.s, '', 2);
@@ -216,6 +216,11 @@ function taskInfo(t, di, ti) {
     return {min, pct: done.length / L.length, n: done.length, right, start: 1,
       title: t.k === 'hi' ? `📝 高頻題「${name}」全部做一遍` : t.k === 'one' ? `📝 只考過 1 屆的題目「${name}」做一遍` : `🔁 ${SHORT[t.s]} ⭐⭐ 以上重做一遍（這天做的才算）`,
       sub: `${L.length} 題 · 做過 ${done.length} · 上次答對 ${right} · 約 ${min} 分鐘`};
+  }
+  if (t.k === 'sim') {
+    const t0 = dayStart(di), sc = S.hist.filter(x => x.pid === `sim-${t.s}` && (x.ts || 0) >= t0).map(x => x.score).reverse();
+    return {min: t.min, pct: sc.length ? 1 : 0, sim: t.s, opt: t.opt, title: `🎯 仿真模擬考：${SUBJ[t.s]}（這天做的才算）${t.opt ? '（選做）' : ''}`,
+      sub: `限時 ${subjMin(t.s)} 分鐘＋檢討錯題 · 約 ${t.min} 分鐘${sc.length ? ` · 這天做了 ${sc.length} 份：${sc.join('、')} 分` : ' · 每次都是新考卷，最像真考'}`};
   }
   if (t.k === 'mock') {
     const p = paperOf(t.id), m = S.mock[t.id];
@@ -285,6 +290,7 @@ function planTab() {
       <div class="mut">${esc(x.sub)}</div><div class="pbar"><i style="width:${x.pct * 100}%"></i></div>
       ${x.start ? `<button class="primary" data-act="pstart" data-arg="${di}-${k}">${x.pct > 0 ? '繼續' : '開始'}</button>` : ''}
       ${x.mock ? `<button class="primary" data-act="mstart" data-arg="${x.mock}">開始模擬考</button>` : ''}
+      ${x.sim ? `<button class="primary" data-act="sstart" data-arg="${x.sim}">開始仿真模擬考</button>` : ''}
       ${x.href ? `<a class="btnlink" href="${x.href}">${x.href.startsWith('numbers') ? '🔢 打開數字速記' : '📖 打開筆記'}</a>` : ''}
       ${x.manual ? `<button data-act="pchk" data-arg="${di}-${k}">${ok ? '取消打勾' : '✔ 完成了'}</button>` : ''}</div>`;
   });
@@ -397,17 +403,19 @@ const isCalc = q => q.exp.some(e => /^[①②③④]/.test(e));
 
 function anaData(s) {
   const N = NQ(s), u = SIMU(s), L = POOL[s], comp = ((DATA.sim || {})[s] || {}).comp || {};
-  const src = {}, chm = {};
+  const src = {}, chm = {}, tq = {calc: {s: 0, n: 0}, idea: {s: 0, n: 0}}, cal = [];
   S.hist.forEach(x => {
     if (histSubj(x) !== s) return;
     const g = src[KIND(x.pid)] = src[KIND(x.pid)] || {c: 0, t: 0, sc: []};
     g.sc.push(x.score);
+    if (x.est != null && KIND(x.pid) === '仿真模擬考') cal.push(x.score - x.est);
     if (!x.r) return;
     histItems(x).forEach((q, i) => {
       if (!q || i >= x.r.length) return;
       const ok = x.r[i] === '1', ch = chOf(q);
       g.t++; if (ok) g.c++;
-      if (ch) { const m = chm[ch] = chm[ch] || {c: 0, t: 0}; m.t++; if (ok) m.c++; }
+      if (ch) { const m = chm[ch] = chm[ch] || {c: 0, t: 0, s: 0, ns: 0}; m.t++; if (ok) m.c++; if (x.tm && x.tm[i]) { m.s += x.tm[i]; m.ns++; } }
+      if (x.tm && x.tm[i] && q.exp) { const z = tq[isCalc(q) ? 'calc' : 'idea']; z.s += x.tm[i]; z.n++; }
     });
   });
   let pc = 0, pt = 0, n1 = 0, k1 = 0, nRec = 0;
@@ -435,7 +443,7 @@ function anaData(s) {
     const acc0 = Wd + m0 ? (Wr + ft * m0) / (Wd + m0) : ft, mm = chm[ch], wm = mm ? Math.min(1, mm.t / 10) : 0;
     const acc = mm ? (acc0 + wm * mm.c / mm.t) / (1 + wm) : acc0;
     const p = (1 - u) * (cov * acc + (1 - cov) * ft) + u * ft;
-    return {ch, k, idx, n: Lc.length, done: Lc.length - undone, acc: Wd ? Wr / Wd : null, p, loss: k * (1 - p) * 100 / N, m: chm[ch]};
+    return {sec: chm[ch] && chm[ch].ns ? chm[ch].s / chm[ch].ns : null, ns: chm[ch] ? chm[ch].ns : 0, ch, k, idx, n: Lc.length, done: Lc.length - undone, acc: Wd ? Wr / Wd : null, p, loss: k * (1 - p) * 100 / N, m: chm[ch]};
   });
   const E = chs.reduce((a, c) => a + c.k * c.p, 0), V = chs.reduce((a, c) => a + c.k * c.p * (1 - c.p), 0), need = Math.ceil(N * 0.7);
   const cat = (name, share, f) => {
@@ -446,7 +454,7 @@ function anaData(s) {
                 cat('📜 舊屆題', comp.old, q => q.old)];
   const calc = L.some(isCalc) ? [cat('計算題', null, isCalc), cat('觀念題', null, q => !isCalc(q))] : [];
   const rep = L.filter(q => { const r = S.rec[q.id]; return r && r.w >= 2 && !r.last; }).length;
-  return {N, u, E, need, pass: nRec >= 60 ? phi((E - need + 0.5) / Math.sqrt(V || 1)) : null, ft, k1, n1, nRec, chs, cats, calc, src, rep,
+  return {tq, cal, pace: subjMin(s) * 60 / N, V, N, u, E, need, pass: nRec >= 60 ? phi((E - need + 0.5) / Math.sqrt(V || 1)) : null, ft, k1, n1, nRec, chs, cats, calc, src, rep,
           cov: Wall ? Wdone / Wall : 0, comp};
 }
 
@@ -467,6 +475,11 @@ function anaTab() {
     h += `<div class="card"><b>${SUBJ[s]}</b>`;
     h += d.pass == null ? `<div class="mut">已作答 ${d.nRec} 題，做滿 60 題後才推估分數。</div>`
       : `<div class="big">${Math.round(d.E / d.N * 100)} 分</div><div>推估真考分數，及格機率約 <b class="${d.pass >= 0.8 ? 'pass' : 'fail'}">${Math.round(d.pass * 100)}%</b></div>`;
+    const cal = d.cal.slice(0, 5);
+    if (d.pass != null && cal.length >= 3) {
+      const off = cal.reduce((a, b) => a + b, 0) / cal.length, E2 = Math.max(0, Math.min(d.N, d.E + off * d.N / 100)), p2 = phi((E2 - d.need + 0.5) / Math.sqrt(d.V || 1));
+      h += `<div>用仿真卷實際分數校準後：<b>${Math.round(E2 / d.N * 100)} 分</b>，及格機率約 <b class="${p2 >= 0.8 ? 'pass' : 'fail'}">${Math.round(p2 * 100)}%</b></div><div class="mut">最近 ${cal.length} 份仿真卷，實際分數平均比交卷前的推估${off >= 0 ? '高' : '低'} ${Math.abs(off).toFixed(1)} 分</div>`;
+    } else if (d.pass != null) h += `<div class="mut">做滿 3 份仿真模擬考後，會用實際分數自動校準這個推估（目前 ${cal.length} 份有校準資料）</div>`;
     if (sim.length) h += `<div class="mut">仿真模擬考最近 ${sim.length} 次：${sim.join('、')} 分（平均 ${simAvg}）</div>`;
     const adv = [], top = [...d.chs].sort((a, b) => b.loss - a.loss).filter(c => c.loss >= 0.5).slice(0, 3);
     if (top.length) adv.push(`優先加強：${top.map(c => `${esc(c.ch)}（約失 ${c.loss.toFixed(1)} 分）`).join('、')}`);
@@ -477,12 +490,16 @@ function anaTab() {
     if (pr && mk.t >= 30 && pr.c / pr.t - mk.c / mk.t >= 0.15)
       adv.push(`模擬考答對率 ${pct(mk.c, mk.t)} 比練習 ${pct(pr.c, pr.t)} 低很多：練習時可能記住了答案，限時作答才是真實力 → 多做仿真模擬考`);
     if (simAvg != null && simAvg < 70) adv.push(`仿真模擬考近 ${sim.length} 次平均 ${simAvg} 分，還沒到 70`);
+    const slow = d.chs.filter(c => c.sec != null && c.ns >= 5 && c.sec > d.pace * 1.5).sort((a, b) => b.sec - a.sec);
+    if (slow.length) adv.push(`模擬考作答偏慢：${slow.slice(0, 3).map(c => `${esc(c.ch)}（平均 ${Math.round(c.sec)} 秒／題）`).join('、')}；限時平均每題 ${Math.round(d.pace)} 秒`);
+    if (d.tq.calc.n >= 5 && d.tq.idea.n >= 5 && d.tq.calc.s / d.tq.calc.n > d.pace * 1.5)
+      adv.push(`計算題平均 ${Math.round(d.tq.calc.s / d.tq.calc.n)} 秒／題（觀念題 ${Math.round(d.tq.idea.s / d.tq.idea.n)} 秒）：考試時計算題先跳過、觀念題做完再回來算`);
     if (d.rep) adv.push(`有 ${d.rep} 題錯 2 次以上、上次也錯 → 按下面「重做常錯題」`);
     if (adv.length) h += `<div style="margin:8px 0">${adv.map(a => `<p style="margin:4px 0">• ${a}</p>`).join('')}</div>`;
     h += top.map(c => `<button data-act="astart" data-arg="${s}|${c.idx}">練「${esc(c.ch)}」錯題＋沒做過</button>`).join('');
     h += `<button data-act="astart" data-arg="${s}|new">最可能考、還沒做過的 40 題</button><button data-act="astart" data-arg="${s}|w" ${d.rep ? '' : 'disabled'}>重做常錯題（${d.rep} 題）</button>`;
-    h += `<div class="mut" style="margin-top:10px">各章（依預估失分排序）</div><table><tr><th>章節（考幾題）</th><th>做過</th><th>上次答對</th><th>模擬考答對</th><th>預估失分</th></tr>` +
-      [...d.chs].sort((a, b) => b.loss - a.loss).map(c => `<tr><td>${esc(c.ch)}（${c.k}）</td><td>${c.done}/${c.n}</td><td>${c.acc == null ? '—' : Math.round(c.acc * 100) + '%'}</td><td>${c.m ? pct(c.m.c, c.m.t) : '—'}</td><td>${c.loss.toFixed(1)}</td></tr>`).join('') + '</table>';
+    h += `<div class="mut" style="margin-top:10px">各章（依預估失分排序；秒／題＝模擬考每題平均停留秒數，限時平均每題 ${Math.round(d.pace)} 秒）</div><table><tr><th>章節（考幾題）</th><th>做過</th><th>上次答對</th><th>模擬考答對</th><th>預估失分</th><th>秒／題</th></tr>` +
+      [...d.chs].sort((a, b) => b.loss - a.loss).map(c => `<tr><td>${esc(c.ch)}（${c.k}）</td><td>${c.done}/${c.n}</td><td>${c.acc == null ? '—' : Math.round(c.acc * 100) + '%'}</td><td>${c.m ? pct(c.m.c, c.m.t) : '—'}</td><td>${c.loss.toFixed(1)}</td><td>${c.sec == null ? '—' : Math.round(c.sec)}</td></tr>`).join('') + '</table>';
     h += `<div class="mut" style="margin-top:10px">題型</div><table><tr><th>題型</th><th>真考約占</th><th>做過</th><th>上次答對</th></tr>` +
       d.cats.concat(d.calc).map(c => `<tr><td>${c.name}</td><td>${c.share != null ? Math.round(c.share * 100) + '%' : '—'}</td><td>${c.done}/${c.n}</td><td>${pct(c.right, c.done)}</td></tr>`).join('') +
       `<tr><td>完全沒看過的新題</td><td>${Math.round((d.comp.unseen || d.u) * 100)}%</td><td colspan="2">用你第一次作答的答對率估：${d.k1 ? pct(d.n1, d.k1) : '—'}</td></tr></table>`;
@@ -490,7 +507,7 @@ function anaTab() {
       ['練習', '歷屆原卷', '預測卷', '仿真模擬考', '隨機模擬考'].filter(k => d.src[k]).map(k => { const g = d.src[k];
         return `<tr><td>${k}</td><td>${g.t || '—'}</td><td>${g.t ? pct(g.c, g.t) : '—'}</td><td>${g.sc.slice(0, 3).join('、') || '—'}</td></tr>`; }).join('') + '</table></div>';
   });
-  h += '<div class="card mut">推估方法：每章的「上次答對率」依考試機率加權，有模擬考作答的章節再和模擬考答對率平均（模擬考作答滿 10 題時各占一半）；還沒做過的題和真考完全沒看過的題，都用你第一次作答的答對率估，再算出整科分數與及格機率。這是方向不是保證，最準的還是仿真模擬考的實際分數。這次更新前做的模擬考只有分數、沒有逐題紀錄；練習的答對率也含更新前的模擬考作答。</div>';
+  h += '<div class="card mut">推估方法：每章的「上次答對率」依考試機率加權，有模擬考作答的章節再和模擬考答對率平均（模擬考作答滿 10 題時各占一半）；還沒做過的題和真考完全沒看過的題，都用你第一次作答的答對率估，再算出整科分數與及格機率。這是方向不是保證，最準的還是仿真模擬考的實際分數。這次更新前做的模擬考只有分數、沒有逐題紀錄和作答時間；校準是比較每份仿真卷交卷前的推估和實際分數；練習的答對率也含更新前的模擬考作答。</div>';
   return h;
 }
 
@@ -571,8 +588,17 @@ function summary() {
 }
 
 /* ---------- 模擬考 ---------- */
+function mockClock(id) {
+  const c = S.cur;
+  if (!c) return;
+  const now = Date.now();
+  c.tm = c.tm || {};
+  if (c.tOn && c.tAt) c.tm[c.tOn] = (c.tm[c.tOn] || 0) + Math.min(now - c.tAt, 300000);
+  c.tOn = id || null; c.tAt = now;
+}
 function showMock() {
   view = 'mock';
+  mockClock(paperFromCur(S.cur).items[S.cur.i].id);
   const c = S.cur, p = paperFromCur(c), q = p.items[c.i];
   const n = Object.keys(c.ans).length;
   app.innerHTML = `<header class="bar"><button data-act="home">← 暫離</button><span>⏱ <b id="timer"></b><br>${c.i + 1} / ${p.items.length}（已答 ${n}）</span>
@@ -595,6 +621,8 @@ function tick() {
 function submitMock() {
   stopTimer();
   const c = S.cur, p = paperFromCur(c);
+  mockClock(null);
+  const pre = /^sim-/.test(c.pid) ? anaData(c.pid.slice(4)) : null;
   let right = 0;
   p.items.forEach(q => {
     const a = c.ans[q.id];
@@ -609,7 +637,7 @@ function submitMock() {
   const used = Math.round((Math.min(Date.now(), c.end) - c.start) / 60000);
   const rs = p.items.map(q => { const a = c.ans[q.id]; return a == null ? (q.ans == null ? '1' : '-') : isOk(q, a) ? '1' : '0'; }).join('');
   S.hist.unshift(Object.assign({pid: p.id, name: p.name, score, used, ts: Date.now(), date: new Date().toLocaleString('zh-TW', {hour12: false}),
-    s: (p.items.find(q => q && q.s) || {}).s, r: rs}, paperOf(p.id) ? {} : {ids: c.ids}, c.fresh != null ? {fresh: c.fresh} : {}));
+    s: (p.items.find(q => q && q.s) || {}).s, r: rs, tm: p.items.map(q => Math.round(((c.tm || {})[q.id] || 0) / 1000)), est: pre && pre.pass != null ? Math.round(pre.E / pre.N * 100) : null}, paperOf(p.id) ? {} : {ids: c.ids}, c.fresh != null ? {fresh: c.fresh} : {}));
   result = {p, ans: {...c.ans}, score, right, used, i: 0, fresh: c.fresh};
   S.cur = null; save();
   showResult();
@@ -647,7 +675,7 @@ function curQ() {
 function act(a, arg) {
   switch (a) {
     case 'tab': tab = arg; home(); break;
-    case 'home': home(); break;
+    case 'home': if (view === 'mock') { mockClock(null); save(); } home(); break;
     case 'subj': S.prefs.s = arg; save(); home(); break;
     case 'pday': planDay = +arg; planAuto = false; home(); window.scrollTo(0, 0); break;
     case 'pchk': S.plan.chk[arg] = S.plan.chk[arg] > 0 ? -Date.now() : Date.now(); save(); home(); break;
@@ -903,7 +931,7 @@ function syncCard() {
 }
 setInterval(() => { if (document.visibilityState === 'visible') syncNow(true); }, PULL_GAP);
 
-const PAGE_VER = '1791708697';
+const PAGE_VER = '1791709472';
 function checkUpdate() {
   if (document.getElementById('newver')) return;
   fetch('index.html?x=' + Date.now(), {cache: 'no-store'}).then(r => r.text()).then(t => {
