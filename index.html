@@ -182,8 +182,8 @@ function home() {
   view = 'home'; sess = null; stopTimer();
   if (tab === 'ana') tab = 'stats';
   const tabs = [['plan', '📅 每日'], ['practice', '📝 練習'], ['mock', '⏱ 模擬'], ['wrong', '❌ 錯題'], ['stats', '📊 紀錄']];
-  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1795754060">📖 筆記</a>
-    <details class="more"><summary>⋯ 更多</summary><div class="morebox"><a href="numbers.html?v=1795754060">🔢 數字</a><a href="answers.html?v=1795754060">✅ 解析</a></div></details>
+  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1795754581">📖 筆記</a>
+    <details class="more"><summary>⋯ 更多</summary><div class="morebox"><a href="numbers.html?v=1795754581">🔢 數字</a><a href="answers.html?v=1795754581">✅ 解析</a></div></details>
     </span></div><nav>${tabs.map(([k, v]) =>
     `<button class="tab ${tab === k ? 'on' : ''}" data-act="tab" data-arg="${k}">${v}</button>`).join('')}</nav></header><main>`;
   if (!['plan', 'practice', 'mock', 'wrong', 'stats'].includes(tab)) tab = 'plan';
@@ -299,9 +299,9 @@ const dayTime = di => planStartMs() + di * 86400000;
 const dayOpen = di => di <= todayIdx() || !!(S.plan.open || {})[di];
 const dayStart = di => Math.min(dayTime(di), (S.plan.open || {})[di] || Infinity);
 function noteHref(prefix) {
-  if (typeof prefix === 'string' && prefix.endsWith('.html')) return `${prefix}?v=1795754060`;
+  if (typeof prefix === 'string' && prefix.endsWith('.html')) return `${prefix}?v=1795754581`;
   const ids = [].concat(prefix).map(p => Object.keys(NOTE).find(t => t.startsWith(p))).filter(Boolean).map(k => NOTE[k]);
-  return `note.html?v=1795754060${ids.length ? '&only=' + encodeURIComponent(ids.join(',')) : ''}`;
+  return `note.html?v=1795754581${ids.length ? '&only=' + encodeURIComponent(ids.join(',')) : ''}`;
 }
 /* 錯題／解析「看本章考點」→ note.html?only=<slug>
  * slug＝筆記 h3 的 id：
@@ -312,7 +312,7 @@ function noteChHref(ch) {
   let id = ch;
   const hit = Object.keys(NOTE).find(t => t === ch || t.startsWith(ch));
   if (hit) id = NOTE[hit];
-  return `note.html?v=1795754060&only=${encodeURIComponent(id)}`;
+  return `note.html?v=1795754581&only=${encodeURIComponent(id)}`;
 }
 function todayIdx() {
   ensurePlan();
@@ -687,8 +687,8 @@ function anaData(s) {
     const Lq = L.filter(f), d = Lq.filter(q => S.rec[q.id]);
     return {name, share, n: Lq.length, done: d.length, right: d.filter(q => S.rec[q.id].last).length};
   };
-  const cats = [cat('⭐ 高頻（考過 2 屆以上）', comp.hi, q => !q.old && q.n >= 2), cat('只考過 1 屆', comp.one, q => !q.old && q.n < 2),
-                cat('📜 舊屆題', comp.old, q => q.old)];
+  // 舊屆補充池已清空：不再列「舊屆題」分類（避免 0 題卻顯示卷面占比）
+  const cats = [cat('⭐ 高頻（考過 2 屆以上）', comp.hi, q => !q.old && q.n >= 2), cat('只考過 1 屆', comp.one, q => !q.old && q.n < 2)];
   const calc = L.some(isCalc) ? [cat('計算題', null, isCalc), cat('觀念題', null, q => !isCalc(q))] : [];
   const rep = L.filter(q => { const r = S.rec[q.id]; return r && r.w >= 2 && !r.last; }).length;
   return {Eo, nf, an, nwr, tq, cal, pace: subjMin(s) * 60 / N, V, N, u, E, need, pass: nRec >= 60 ? phi((E - need + 0.5) / Math.sqrt(V || 1)) : null, ft, k1, n1, nRec, chs, cats, calc, src, rep,
@@ -729,7 +729,7 @@ function anaTab() {
     h += `<div class="card"><b>📈 ${SHORT[s]}</b>`;
     h += d.pass == null ? `<div class="mut">已作答 ${d.nRec} 題，滿 60 題後推估。</div>`
       : `<div class="big">${Math.round(d.E / d.N * 100)} 分</div><div>及格機率約 <b class="${d.pass >= 0.8 ? 'pass' : 'fail'}">${Math.round(d.pass * 100)}%</b>
-        <span class="mut">（舊題約 ${Math.round((1 - d.u) * 100)}%／新題約 ${Math.round(d.u * 100)}%）</span></div>`;
+        <span class="mut">（考古約 ${Math.round((1 - d.u) * 100)}%／新題約 ${Math.round(d.u * 100)}%）</span></div>`;
     const cal = d.cal.slice(0, 5);
     if (d.pass != null && cal.length >= 3) {
       const off = cal.reduce((a, b) => a + b, 0) / cal.length, E2 = Math.max(0, Math.min(d.N, d.E + off * d.N / 100)), p2 = phi((E2 - d.need + 0.5) / Math.sqrt(d.V || 1));
@@ -748,7 +748,7 @@ function anaTab() {
     h += `<details style="margin-top:10px"><summary class="mut" style="cursor:pointer">📋 各章明細</summary><table><tr><th>章節</th><th>做過</th><th>上次對</th><th>失分</th></tr>` +
       [...d.chs].sort((a, b) => b.loss - a.loss).map(c => `<tr><td>${esc(c.ch)}（${c.k}）</td><td>${c.done}/${c.n}</td><td>${c.acc == null ? '—' : Math.round(c.acc * 100) + '%'}</td><td>${c.loss.toFixed(1)}</td></tr>`).join('') + '</table></details></div>';
   });
-  h += '<details class="card mut"><summary style="cursor:pointer">ℹ️ 推估怎麼算</summary><p>舊題用答對率、新題用亂猜與穩定性中間值；方向參考，非保證。仿真通常比真考高 5～20 分。</p></details>';
+  h += '<details class="card mut"><summary style="cursor:pointer">ℹ️ 推估怎麼算</summary><p>考古題用答對率、卷面新題用亂猜與穩定性中間值；方向參考，非保證。仿真通常比真考高 5～20 分。「考古」＝主庫曾出現過的題，不是已下架的舊屆補充池。</p></details>';
   return h;
 }
 
@@ -1253,7 +1253,7 @@ function syncCard() {
 }
 setInterval(() => { if (document.visibilityState === 'visible') syncNow(true); }, PULL_GAP);
 
-const PAGE_VER = '1795754060';
+const PAGE_VER = '1795754581';
 function checkUpdate() {
   if (document.getElementById('newver')) return;
   fetch('index.html?x=' + Date.now(), {cache: 'no-store'}).then(r => r.text()).then(t => {
