@@ -92,8 +92,8 @@ const BOOST_PRESETS = {
   ],
   prac: [
     {label: '⭐實務① 高頻鎖分', star: 1, pat: '', mode: 'weak'},
-    {label: '🔥實務② 全部題拉分', star: 0, pat: '', mode: 'new'},
-    {label: '❌實務③ 錯的／非屬', star: 0, pat: 'wrong', mode: 'weak'},
+    {label: '❌實務② 錯的／非屬', star: 0, pat: 'wrong', mode: 'weak'},
+    {label: '🔥實務③ 全部題拉分', star: 0, pat: '', mode: 'new'},
   ],
 };
 const save = quiet => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} if (!quiet) markDirty(); };
@@ -182,8 +182,8 @@ function home() {
   view = 'home'; sess = null; stopTimer();
   if (tab === 'ana') tab = 'stats';
   const tabs = [['plan', '📅 每日'], ['practice', '📝 練習'], ['mock', '⏱ 模擬'], ['wrong', '❌ 錯題'], ['stats', '📊 紀錄']];
-  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1795754581">📖 筆記</a>
-    <details class="more"><summary>⋯ 更多</summary><div class="morebox"><a href="numbers.html?v=1795754581">🔢 數字</a><a href="answers.html?v=1795754581">✅ 解析</a></div></details>
+  let h = `<header><div class="hrow"><h1>${esc(CFG.title)}</h1><span class="links"><a href="note.html?v=1795754787">📖 筆記</a>
+    <details class="more"><summary>⋯ 更多</summary><div class="morebox"><a href="numbers.html?v=1795754787">🔢 數字</a><a href="answers.html?v=1795754787">✅ 解析</a></div></details>
     </span></div><nav>${tabs.map(([k, v]) =>
     `<button class="tab ${tab === k ? 'on' : ''}" data-act="tab" data-arg="${k}">${v}</button>`).join('')}</nav></header><main>`;
   if (!['plan', 'practice', 'mock', 'wrong', 'stats'].includes(tab)) tab = 'plan';
@@ -299,9 +299,9 @@ const dayTime = di => planStartMs() + di * 86400000;
 const dayOpen = di => di <= todayIdx() || !!(S.plan.open || {})[di];
 const dayStart = di => Math.min(dayTime(di), (S.plan.open || {})[di] || Infinity);
 function noteHref(prefix) {
-  if (typeof prefix === 'string' && prefix.endsWith('.html')) return `${prefix}?v=1795754581`;
+  if (typeof prefix === 'string' && prefix.endsWith('.html')) return `${prefix}?v=1795754787`;
   const ids = [].concat(prefix).map(p => Object.keys(NOTE).find(t => t.startsWith(p))).filter(Boolean).map(k => NOTE[k]);
-  return `note.html?v=1795754581${ids.length ? '&only=' + encodeURIComponent(ids.join(',')) : ''}`;
+  return `note.html?v=1795754787${ids.length ? '&only=' + encodeURIComponent(ids.join(',')) : ''}`;
 }
 /* 錯題／解析「看本章考點」→ note.html?only=<slug>
  * slug＝筆記 h3 的 id：
@@ -312,7 +312,7 @@ function noteChHref(ch) {
   let id = ch;
   const hit = Object.keys(NOTE).find(t => t === ch || t.startsWith(ch));
   if (hit) id = NOTE[hit];
-  return `note.html?v=1795754581&only=${encodeURIComponent(id)}`;
+  return `note.html?v=1795754787&only=${encodeURIComponent(id)}`;
 }
 function todayIdx() {
   ensurePlan();
@@ -477,12 +477,12 @@ function practiceTab() {
   const patOpts = [['', '全部句型']].concat(Object.keys(PAT_LABEL).map(k => [k, PAT_LABEL[k]]));
   const presets = BOOST_PRESETS[p.s] || [
     {label: '⭐① 高頻鎖分', star: 1, pat: '', mode: 'weak'},
-    {label: '🔥② 全部題拉分', star: 0, pat: '', mode: 'new'},
-    {label: '❌③ 錯的／非屬', star: 0, pat: 'wrong', mode: 'weak'},
+    {label: '❌② 錯的／非屬', star: 0, pat: 'wrong', mode: 'weak'},
+    {label: '🔥③ 全部題拉分', star: 0, pat: '', mode: 'new'},
   ];
   const tip = p.s === 'law'
     ? '⚡ 上面三顆是快捷：①錯的句型 ②數字題 ③還沒做過的全部題。下面點章節刷；標「拉分」的章優先。'
-    : '⚡ 上面三顆是快捷：①高頻鎖分 ②還沒做過的全部題 ③錯的句型。下面點章節刷；標「拉分」的章優先。';
+    : '⚡ 上面三顆是快捷：①高頻鎖分 ②錯的句型 ③還沒做過的全部題。下面點章節刷；標「拉分」的章優先。';
   const filterSummary = [
     p.star === 0 ? '全部題' : p.star === 1 ? '高頻' : '⭐'.repeat(p.star),
     p.mode === 'all' ? '含已做' : p.mode === 'new' ? '未做' : '弱項',
@@ -1253,7 +1253,7 @@ function syncCard() {
 }
 setInterval(() => { if (document.visibilityState === 'visible') syncNow(true); }, PULL_GAP);
 
-const PAGE_VER = '1795754581';
+const PAGE_VER = '1795754787';
 function checkUpdate() {
   if (document.getElementById('newver')) return;
   fetch('index.html?x=' + Date.now(), {cache: 'no-store'}).then(r => r.text()).then(t => {
